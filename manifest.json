@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Prospectors Grand Land Helper",
+  "version": "0.1",
+  "description": "Track resource prices and overlay map info for Prospectors Grand Land.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["*://grandland.prospectors.io/*"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://grandland.prospectors.io/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
