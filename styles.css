@@ -1,21 +1,18 @@
 body {
-  font-family: sans-serif;
-  min-width: 200px;
+  width: 300px;
   padding: 10px;
-}
-
-h2 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-
-#prices div {
-  margin: 4px 0;
+  font-family: Arial, sans-serif;
 }
 
 button {
-  margin-top: 8px;
-  width: 100%;
-  padding: 6px;
-  font-size: 14px;
+  margin: 5px;
+  padding: 5px 10px;
+}
+
+#prices {
+  margin-top: 10px;
+}
+
+#prices div {
+  margin: 2px 0;
 }
