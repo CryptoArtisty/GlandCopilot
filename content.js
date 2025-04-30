@@ -1,39 +1,43 @@
-// content.js
-
-// Variable to store average prices
-let avgPrices = {};
-
-// Store the original fetch function
-const originalFetch = window.fetch;
-
-// Override fetch to intercept API calls
-window.fetch = function(...args) {
-  return originalFetch.apply(this, args).then(response => {
-    // Target the get_updates API endpoint
-    if (args[0] === 'https://grandland.prospectors.io/api/user/get_updates') {
-      response.clone().json().then(data => {
-        console.log('API response data:', data); // Log for inspection
-        // Check for market data - adjust this based on actual response structure
-        if (data.market) {
-          const marketData = data.market;
-          avgPrices = processMarketData(marketData);
-          console.log('Average prices updated:', avgPrices);
-        } else {
-          console.log('Market data not found in response');
-        }
-      }).catch(err => console.error('Error parsing JSON:', err));
-    }
-    return response;
-  });
-};
+// Listen for popup requests
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'GET_PRICES') {
+    // Fetch market data from Wax blockchain
+    fetch('https://wax.greymass.com/v1/chain/get_table_rows', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        json: true,
+        code: 'prospectorsn',
+        scope: 'prospectorsn',
+        table: 'market',
+        limit: 100
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Market data:', data);
+      const marketData = data.rows;
+      const avgPrices = processMarketData(marketData);
+      sendResponse({ success: true, avgPrices });
+    })
+    .catch(error => {
+      console.error('Error fetching market data:', error);
+      sendResponse({ success: false });
+    });
+    return true; // Indicates async response
+  }
+  return true;
+});
 
 // Process market data to calculate average prices
 function processMarketData(marketData) {
   const data = {};
   marketData.forEach(item => {
-    // Adjust 'resource' and 'price' keys based on actual API response
-    const resource = item.resource;
-    const price = parseFloat(item.price);
+    // Adjust 'resource' and 'price' based on actual table columns
+    const resource = item.resource; // e.g., item.resource or item.resource_name
+    const price = parseFloat(item.price); // e.g., item.price or item.price_per_unit
     if (!isNaN(price)) {
       data[resource] = data[resource] || [];
       data[resource].push(price);
@@ -48,62 +52,3 @@ function processMarketData(marketData) {
   }
   return avgPrices;
 }
-
-// Handle messages from the popup
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'GET_PRICES') {
-    sendResponse({ success: true, avgPrices });
-  } else if (msg.type === 'OVERLAY_MAP') {
-    // Target the map element - update selector as needed
-    const map = document.querySelector('#map');
-    if (map) {
-      const existingOverlay = document.getElementById('pgl-overlay');
-      if (existingOverlay) {
-        existingOverlay.remove();
-        sendResponse({ applied: false });
-      } else {
-        const ov = document.createElement('div');
-        ov.id = 'pgl-overlay';
-        ov.style.position = 'absolute';
-        ov.style.top = '0';
-        ov.style.left = '0';
-        ov.style.width = '100%';
-        ov.style.height = '100%';
-        ov.style.pointerEvents = 'none';
-        ov.style.zIndex = '9999';
-
-        const gridSize = 10;
-        const mapRect = map.getBoundingClientRect();
-        const cellWidth = mapRect.width / gridSize;
-        const cellHeight = mapRect.height / gridSize;
-
-        for (let i = 1; i < gridSize; i++) {
-          const vLine = document.createElement('div');
-          vLine.style.position = 'absolute';
-          vLine.style.left = `${i * cellWidth}px`;
-          vLine.style.top = '0';
-          vLine.style.width = '1px';
-          vLine.style.height = '100%';
-          vLine.style.background = 'rgba(255, 255, 255, 0.5)';
-          ov.appendChild(vLine);
-
-          const hLine = document.createElement('div');
-          hLine.style.position = 'absolute';
-          hLine.style.top = `${i * cellHeight}px`;
-          hLine.style.left = '0';
-          hLine.style.height = '1px';
-          hLine.style.width = '100%';
-          hLine.style.background = 'rgba(255, 255, 255, 0.5)';
-          ov.appendChild(hLine);
-        }
-
-        map.style.position = 'relative';
-        map.appendChild(ov);
-        sendResponse({ applied: true });
-      }
-    } else {
-      sendResponse({ applied: false });
-    }
-  }
-  return true; // Indicates async response
-});
