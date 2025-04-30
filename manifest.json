@@ -1,19 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Prospectors Grand Land Tools",
-  "version": "1.0",
-  "description": "Tools for Prospectors Grand Land",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
+  "name": "Prospectors Grand Land Helper",
+  "version": "0.1",
+  "description": "Track resource prices and overlay map info for Prospectors Grand Land.",
+  "permissions": ["activeTab"],
+  "host_permissions": ["https://wax.greymass.com/*"],
   "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["https://grandland.prospectors.io/*"],
-      "js": ["content.js"]
+      "matches": ["*://grandland.prospectors.io/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
     }
   ]
 }
