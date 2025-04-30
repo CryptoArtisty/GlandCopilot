@@ -12,14 +12,17 @@ document.getElementById('refresh').addEventListener('click', () => {
         return;
       }
       const avg = res.avgPrices;
-      const lines = Object.entries(avg)
-        .map(([r, p]) => `<div><strong>${r}</strong>: ${p}</div>`);
-      container.innerHTML = lines.join('');
+      if (Object.keys(avg).length === 0) {
+        container.innerHTML = '<em>No data available yet.</em>';
+      } else {
+        const lines = Object.entries(avg)
+          .map(([r, p]) => `<div><strong>${r}</strong>: ${p}</div>`);
+        container.innerHTML = lines.join('');
+      }
     });
   });
 });
 
-// Overlay map
 document.getElementById('overlay').addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     const id = tabs[0]?.id;
